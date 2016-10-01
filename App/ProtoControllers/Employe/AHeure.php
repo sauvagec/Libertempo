@@ -31,7 +31,7 @@ abstract class AHeure
      *
      * @return int
      */
-    protected function post(array $post, array &$errorsLst, &$notice)
+    protected function postHtmlCommon(array $post, array &$errorsLst, &$notice)
     {
         $user = $_SESSION['userlogin'];
         if (!empty($post['_METHOD'])) {
@@ -53,18 +53,21 @@ abstract class AHeure
                     break;
             }
         } else {
-            if (!$this->hasErreurs($post, $user, $errorsLst)) {
-                $data = $this->dataModel2Db($post, $user);
-                $id   = $this->insert($data, $user);
-                if (0 < $id) {
-                    return $id;
-                }
-            }
-
-            return NIL_INT;
+            return $this->post($post, $errorsLst, $user);
         }
     }
 
+    /**
+    * Créé une demande d'heures
+    *
+    * @param array  $post
+    * @param array  &$errorsLst
+    * @param string $user
+    *
+    * @return int
+    */
+    abstract protected function post(array $post, array &$errorsLst, $user);
+    
     /**
      * Supprime une demande d'heures
      *

@@ -51,7 +51,7 @@ class Additionnelle extends \App\ProtoControllers\Employe\AHeure
         $comment = '';
 
         if (!empty($_POST)) {
-            if (0 >= (int) $this->post($_POST, $errorsLst, $notice)) {
+            if (0 >= (int) $this->postHtmlCommon($_POST, $errorsLst, $notice)) {
                 $errors = '';
                 if (!empty($errorsLst)) {
                     foreach ($errorsLst as $key => $value) {
@@ -142,6 +142,9 @@ class Additionnelle extends \App\ProtoControllers\Employe\AHeure
         if (NIL_INT !== $this->deleteSQL($id, $user, $errorsLst)) {
             log_action($id, 'annul', '', 'Annulation de la demande d\'heure additionnelle ' . $id);
             $notice = _('heure_additionnelle_annulee');
+            $notif = new \App\Libraries\Notification\Additionnelle($id);
+            $errorsLst[] = $notif->send();
+            
             return $id;
         }
         return NIL_INT;
@@ -157,13 +160,33 @@ class Additionnelle extends \App\ProtoControllers\Employe\AHeure
             $data = $this->dataModel2Db($put, $user);
             $id   = $this->update($data, $user, $idHeure);
             log_action($idHeure, 'modif', '', 'Modification demande d\'heure additionnelle ' . $idHeure);
-
+            
             return $id;
         }
 
         return NIL_INT;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    protected function post(array $post, array &$errorsLst, $user)
+    {
+        if (!$this->hasErreurs($post, $user, $errorsLst)) {
+            $data = $this->dataModel2Db($post, $user);
+            $id   = $this->insert($data, $user, $idHeure);
+            log_action($idHeure, 'demande', '', 'demande d\'heure additionnelle ' . $id);
+            $notif = new \App\Libraries\Notification\Additionnelle($id);
+            $send = $notif->send();
+
+            if (false === $send) {
+                $errorsLst['email'] = _('erreur_envoi_mail');
+            }
+            return $id;
+        }
+        return NIL_INT;
+    }
+    
     /**
      * {@inheritDoc}
      */
@@ -253,7 +276,7 @@ class Additionnelle extends \App\ProtoControllers\Employe\AHeure
         $errorsLst = [];
         $notice    = '';
         if (!empty($_POST) && !$this->isSearch($_POST)) {
-            if (0 >= (int) $this->post($_POST, $errorsLst, $notice)) {
+            if (0 >= (int) $this->postHtmlCommon($_POST, $errorsLst, $notice)) {
                 $errors = '';
                 if (!empty($errorsLst)) {
                     foreach ($errorsLst as $value) {
