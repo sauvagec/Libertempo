@@ -3016,40 +3016,47 @@ class Fonctions
 
     public static function recup_users_from_ldap(&$tab_ldap, &$tab_login)
     {
-        // cnx à l'annuaire ldap :
-        $ds = \ldap_connect($_SESSION['config']['ldap_server']);
-        if($_SESSION['config']['ldap_protocol_version'] != 0) {
-            ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, $_SESSION['config']['ldap_protocol_version']) ;
-			// Support Active Directory
-			ldap_set_option($ds, LDAP_OPT_REFERRALS, 0);
-        }
-        if ($_SESSION['config']['ldap_user'] == "") {
-            $bound = ldap_bind($ds);  // connexion anonyme au serveur
-        } else {
-            $bound = ldap_bind($ds, $_SESSION['config']['ldap_user'], $_SESSION['config']['ldap_pass']);
-        }
-
-        // recherche des entrées :
-        if ($_SESSION['config']['ldap_filtre_complet'] != "") {
-            $filter = $_SESSION['config']['ldap_filtre_complet'];
-        } else {
-            $filter = "(&(".$_SESSION['config']['ldap_nomaff']."=*)(".$_SESSION['config']['ldap_filtre']."=".$_SESSION['config']['ldap_filrech']."))";
-        }
-
-        $sr   = ldap_search($ds, $_SESSION['config']['searchdn'], $filter);
-        $data = ldap_get_entries($ds,$sr);
-
-        foreach ($data as $info) {
-            $ldap_libelle_login=$_SESSION['config']['ldap_login'];
-            $ldap_libelle_nom=$_SESSION['config']['ldap_nom'];
-            $ldap_libelle_prenom=$_SESSION['config']['ldap_prenom'];
-            $login = $info[$ldap_libelle_login][0];
-            // concaténation NOM Prénom
-            // utf8_decode permet de supprimer les caractères accentués mal interprêtés...
-            $nom = ( isset($info[$ldap_libelle_nom]) ? strtoupper($info[$ldap_libelle_nom][0]): '' )." ". (isset($info[$ldap_libelle_prenom])?$info[$ldap_libelle_prenom][0]:'');
-            array_push($tab_ldap, $nom);
-            array_push($tab_login, $login);
-        }
+    	if (function_exists('apc_fetch') && ($ldap = apc_fetch('libertempo:ldap'))) {
+    		$tab_ldap = $ldap['ldap'];
+    		$tab_login = $ldap['login'];
+    	} else {
+	        // cnx à l'annuaire ldap :
+	        $ds = \ldap_connect($_SESSION['config']['ldap_server']);
+	        if($_SESSION['config']['ldap_protocol_version'] != 0) {
+	            ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, $_SESSION['config']['ldap_protocol_version']) ;
+				// Support Active Directory
+				ldap_set_option($ds, LDAP_OPT_REFERRALS, 0);
+	        }
+	        if ($_SESSION['config']['ldap_user'] == "") {
+	            $bound = ldap_bind($ds);  // connexion anonyme au serveur
+	        } else {
+	            $bound = ldap_bind($ds, $_SESSION['config']['ldap_user'], $_SESSION['config']['ldap_pass']);
+	        }
+	
+	        // recherche des entrées :
+	        if ($_SESSION['config']['ldap_filtre_complet'] != "") {
+	            $filter = $_SESSION['config']['ldap_filtre_complet'];
+	        } else {
+	            $filter = "(&(".$_SESSION['config']['ldap_nomaff']."=*)(".$_SESSION['config']['ldap_filtre']."=".$_SESSION['config']['ldap_filrech']."))";
+	        }
+	
+	        $sr   = ldap_search($ds, $_SESSION['config']['searchdn'], $filter);
+	        $data = ldap_get_entries($ds,$sr);
+	
+	        foreach ($data as $info) {
+	            $ldap_libelle_login=$_SESSION['config']['ldap_login'];
+	            $ldap_libelle_nom=$_SESSION['config']['ldap_nom'];
+	            $ldap_libelle_prenom=$_SESSION['config']['ldap_prenom'];
+	            $login = $info[$ldap_libelle_login][0];
+	            // concaténation NOM Prénom
+	            // utf8_decode permet de supprimer les caractères accentués mal interprêtés...
+	            $nom = ( isset($info[$ldap_libelle_nom]) ? strtoupper($info[$ldap_libelle_nom][0]): '' )." ". (isset($info[$ldap_libelle_prenom])?$info[$ldap_libelle_prenom][0]:'');
+	            array_push($tab_ldap, $nom);
+	            array_push($tab_login, $login);
+	        }
+	        if (function_exists('apc_store'))
+	        	apc_store('libertempo:ldap', array('ldap' => $tab_ldap, 'login' => $tab_login));
+    	}
     }
 
     public static function affiche_tableau_affectation_user_groupes2($choix_user)
