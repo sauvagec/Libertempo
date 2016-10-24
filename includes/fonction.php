@@ -455,7 +455,7 @@ function authentification_AD_SSO()
 		$userAD = $cred[1];
 
 	//ON VERIFIE ICI QUE L'UTILISATEUR EST DEJA ENREGISTRE SOUS DBCONGES
-	$req_conges = 'SELECT u_login FROM conges_users WHERE u_login=\''. $userAD.'\'';
+	$req_conges = 'SELECT u_login FROM conges_users WHERE u_login=\''. \includes\SQL::quote($userAD).'\'';
 	$res_conges = \includes\SQL::query($req_conges) ;
 	$num_row_conges = $res_conges->num_rows;
 	if($num_row_conges !=0)

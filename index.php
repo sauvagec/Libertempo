@@ -83,7 +83,7 @@ else
 		}
 	}
 	// Si SSO, on utilise les identifiants de session pour se connecter
-	else if ( $_SESSION['config']['how_to_connect_user'] == "SSO" )
+	else if ( $_SESSION['config']['how_to_connect_user'] == "sso" )
 	{
 		$usernameSSO = authentification_AD_SSO();
 		if($usernameSSO != "")
